@@ -5,3 +5,7 @@ __pycache__/
 .DS_Store
 .elasticbeanstalk/*
 !.elasticbeanstalk/config.yml
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
