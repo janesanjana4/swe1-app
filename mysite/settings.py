@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import urllib.request
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,6 +27,29 @@ SECRET_KEY = "django-insecure-p!5tw@((sy3o#9ub9$%oiv&*%$2v7g-t@-f85-vo_r+06#rha5
 DEBUG = True
 
 ALLOWED_HOSTS = [".elasticbeanstalk.com", "localhost", "127.0.0.1"]
+
+
+def _ec2_private_ip():
+    """Return this EC2 instance's private IP so ELB health checks are allowed."""
+    try:
+        token_req = urllib.request.Request(
+            "http://169.254.169.254/latest/api/token",
+            method="PUT",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"},
+        )
+        token = urllib.request.urlopen(token_req, timeout=1).read().decode()
+        ip_req = urllib.request.Request(
+            "http://169.254.169.254/latest/meta-data/local-ipv4",
+            headers={"X-aws-ec2-metadata-token": token},
+        )
+        return urllib.request.urlopen(ip_req, timeout=1).read().decode()
+    except Exception:
+        return None
+
+
+_private_ip = _ec2_private_ip()
+if _private_ip:
+    ALLOWED_HOSTS.append(_private_ip)
 
 
 # Application definition
@@ -86,7 +110,7 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: E501,
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: E501
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
